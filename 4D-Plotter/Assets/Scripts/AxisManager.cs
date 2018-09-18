@@ -2,30 +2,33 @@
 using System.Collections.Generic;
 using UnityEngine;
 
+/// <summary>
+/// Manager of the axis labels.
+/// </summary>
 public class AxisManager : MonoBehaviour {
 
-    public GameObject axisLabelPrefab;
-    public int labelCount = 5;
+    public GameObject axisLabelPrefab; //Prefab of a label
+    public int labelCount = 5; //Number of labels to be visible per axis per side
 
     private AxisLabel[][] labelList;
     private AxisLabel[] axisNameLabels;
 
-    float xMax = 10;
+    float xMax = 10; //Max unity coordinates for furthest label
     float yMax = 10;
     float zMax = 10;
 
-    float xScale = 1;
+    float xScale = 1; //Max displayed coordinate
     float yScale = 1;
     float zScale = 1;
 
-    bool reLabelX = false;
+    bool reLabelX = false; //Used for updating labels.
     bool reLabelY = false;
     bool reLabelZ = false;
+    
 
-	// Use this for initialization
 	void Start () {
         labelList = new AxisLabel[3][];
-        labelList[0] = new AxisLabel[labelCount * 2 + 1];
+        labelList[0] = new AxisLabel[labelCount * 2 + 1]; //* 2 cause axis have a negative sides too, + 1 cause 0 exists. 
         labelList[1] = new AxisLabel[labelCount * 2 + 1];
         labelList[2] = new AxisLabel[labelCount * 2 + 1];
 
@@ -38,7 +41,7 @@ public class AxisManager : MonoBehaviour {
         axisNameLabels[1].SetText("y");
         axisNameLabels[2].SetText("z");
 
-        for (int i = -labelCount; i <= labelCount; i++)
+        for (int i = -labelCount; i <= labelCount; i++) //Add the labels
         {
             labelList[0][i + labelCount] = GameObject.Instantiate(axisLabelPrefab, new Vector3(i, 0, 0), Quaternion.identity, transform).GetComponent<AxisLabel>();
             labelList[1][i + labelCount] = GameObject.Instantiate(axisLabelPrefab, new Vector3(0, i, 0), Quaternion.identity, transform).GetComponent<AxisLabel>();
@@ -49,7 +52,9 @@ public class AxisManager : MonoBehaviour {
 		
 	}
     
-
+    /// <summary>
+    /// Relabel the labels, and relocate them
+    /// </summary>
     public void ReLabel()
     {
         if (reLabelX)
@@ -91,12 +96,14 @@ public class AxisManager : MonoBehaviour {
     // Update is called once per frame
     void Update()
     {
+        //If any of the axis have been changed, relabel.
         if (reLabelX || reLabelY || reLabelZ)
         {
             ReLabel();
         }
         reLabelX = reLabelY = reLabelZ = false;
 
+        //Simple controlling 
         if (Input.GetKey(KeyCode.UpArrow))
         {
             if (Input.GetKey(KeyCode.X))
