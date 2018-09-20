@@ -79,7 +79,7 @@
 		Pass
 	{
 		Blend SrcAlpha OneMinusSrcAlpha
-		Cull Off
+		//Cull Off
 
 		CGPROGRAM
 #pragma vertex vert
@@ -143,8 +143,8 @@
 		c.a *= 0.05;
 		
 		float4 heightColor = (1, 1, 1, 1);
-		heightColor.r = 1.0 - 1.0 / 1 * i.worldPosition.y;
-		heightColor.g = 1.0 - 1.0 / 1 * i.worldPosition.y;
+		heightColor.r = 1.0 - 1.0 / 2 * i.worldPosition.y;
+		heightColor.g = 1.0 - 1.0 / 2 * i.worldPosition.y;
 
 		float4 finalColor = (c * diffuseColour * heightColor);
 		return finalColor;
