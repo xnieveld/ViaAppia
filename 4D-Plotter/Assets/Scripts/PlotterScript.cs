@@ -3,32 +3,37 @@ using System.Collections.Generic;
 using UnityEngine;
 using System;
 
+/// <summary>
+/// Display the graphs/datasets.
+/// </summary>
 public class PlotterScript : MonoBehaviour
 {
     [SerializeField]
     AxisManager manager;
 
-    public enum ViewingMode { Lissajous, Model4D, Graph3d, Graph2d }
-    public ViewingMode viewingMode;
+    public enum ViewingModes { Lissajous, Model4D, Graph3d, Graph2d }
+    public ViewingModes viewingMode;
 
-    public enum DisplayMode { LineRenderer, Shader }
-    public DisplayMode displayMode;
+    public enum DisplayModes { LineRenderer, Shader }
+    public DisplayModes displayMode;
 
     private Mesh mesh;
     private MeshRenderer renderer;
     private Material material;
+    private LineRenderer lineRenderer;
 
     // Use this for initialization
     void Start()
     {
-        //Vector3[] pointArray = Graph3DFigure(Lissajous2, 100, 100);
-        //GetComponent<LineRenderer>().positionCount = 10000;
-        //GetComponent<LineRenderer>().SetPositions(pointArray);
+        lineRenderer = GetComponent<LineRenderer>();
         mesh = GetComponent<MeshFilter>().mesh;
         renderer = GetComponent<MeshRenderer>();
         material = GetComponent<Renderer>().material;
 
+        
         MakePlane(200);
+
+        ViewingMode = ViewingModes.Lissajous;
     }
 
     // Update is called once per frame
@@ -149,5 +154,50 @@ public class PlotterScript : MonoBehaviour
         material.SetFloat("_GridStep", 1f / edgeCount); 
     }
 
+
+    public ViewingModes ViewingMode
+    {
+        get
+        {
+            return viewingMode;
+        }
+        set
+        {
+            viewingMode = value;
+
+            switch (viewingMode)
+            {
+                case ViewingModes.Lissajous:
+                    if (displayMode == DisplayModes.LineRenderer)
+                    {
+                        renderer.enabled = false;
+                        lineRenderer.enabled = true;
+                        Vector3[] pointArray = Graph3DFigure(Lissajous2, 100, 100);
+                        lineRenderer.positionCount = 10000;
+                        lineRenderer.SetPositions(pointArray);
+                    }
+                    else
+                    {
+                        lineRenderer.enabled = false;
+                        renderer.enabled = true;
+                    }
+                    break;
+
+            }
+        }
+    }
+
+    public DisplayModes DisplayMode
+    {
+        get
+        {
+            return displayMode;
+        }
+        set
+        {
+            displayMode = value;
+            ViewingMode = viewingMode;
+        }
+    }
 
 }
