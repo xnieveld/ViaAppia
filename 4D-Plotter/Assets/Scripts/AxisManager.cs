@@ -7,6 +7,9 @@ using UnityEngine;
 /// </summary>
 public class AxisManager : MonoBehaviour {
 
+    [SerializeField]
+    PlotterScript plotter;
+
     public GameObject axisLabelPrefab; //Prefab of a label
     public int labelCount = 5; //Number of labels to be visible per axis per side
 
