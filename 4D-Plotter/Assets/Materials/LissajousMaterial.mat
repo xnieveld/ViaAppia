@@ -66,8 +66,8 @@ Material:
     - _GridOffsetX: 0.5
     - _GridOffsetY: 0
     - _GridOffsetZ: 0.5
-    - _GridStep: 0.15625
-    - _GridWidth: 0.1
+    - _GridStep: 0.005
+    - _GridWidth: 0.008
     - _Metallic: 0
     - _Mode: 0
     - _OcclusionStrength: 1

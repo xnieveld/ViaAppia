@@ -21,8 +21,8 @@
 	// PI = 3.14159265359;
 
 	float4 lissajous0(int x, int y, int rows, int columns) {
-		float t = (float)x / rows * 2 * 3.14159265359;
-		float r = (float)y / columns * 2 * 3.14159265359;
+		float t = (float)x / columns * 2 * 3.14159265359;
+		float r = (float)y / rows * 2 * 3.14159265359;
 		float4 newPoint = (0, 0, 0, 0);
 
 		newPoint.x = (3 * cos(5.2 * t) + 1.7 * cos(26 * t)) * sin(r);
@@ -32,8 +32,8 @@
 		return newPoint;
 	}
 	float4 lissajous1(int x, int y, int rows, int columns) {
-		float t = (float)x / rows * 2 * 3.14159265359;
-		float r = (float)y / columns * 2 * 3.14159265359;
+		float t = (float)x / columns * 2 * 3.14159265359;
+		float r = (float)y / rows * 2 * 3.14159265359;
 		float4 newPoint = (0, 0, 0, 0);
 
 		newPoint.x = (cos(t) * sin(r));
@@ -42,8 +42,8 @@
 		return newPoint;
 	}
 	float4 lissajous2(int x, int y, int rows, int columns) {
-		float t = (float)x / rows * 2 * 3.14159265359;
-		float r = (float)y / columns * 2 * 3.14159265359;
+		float t = (float)x / columns * 2 * 3.14159265359;
+		float r = (float)y / rows * 2 * 3.14159265359;
 		float4 newPoint = (0, 0, 0, 0);
 
 		newPoint.x = (1.2 * sin(3.5 * t) * sin(r * 2));
@@ -65,7 +65,7 @@
 			newPoint = lissajous2(x, y, rows, columns);
 			break;
 		default:
-			newPoint = float4(((float)x - rows / 2) * 10 / rows, 0, ((float)y - columns / 2) * 10 / columns, 0);
+			newPoint = float4(((float)x - columns / 2) * 10 / columns, 0, ((float)y - rows / 2) * 10 / rows, 0);
 			break;
 		}
 
@@ -131,7 +131,7 @@
 		fixed4 c = (0,0,0,0);
 
 		float2 offset = (_GridOffsetX, _GridOffsetZ);
-		float2 pos = offset + float2(i.uv.x, i.uv.y) / (_GridStep * _Scale);
+		float2 pos = offset + float2(i.uv.x / _ColumnCount, i.uv.y / _RowCount) / (_GridStep * _Scale);
 		float2 f = abs(frac(pos) - 0.5);
 		float3 distance = sqrt(pow(_CamPos.x - i.worldPosition.x, 2) + pow(_CamPos.y - i.worldPosition.y, 2) + pow(_CamPos.z - i.worldPosition.z, 2)) / 1000;
 		float2 df = fwidth(pos) * _GridWidth / distance;
@@ -141,7 +141,11 @@
 
 		c.a *= 0.05;
 		
-		float4 finalColor = (c * diffuseColour);
+		float4 heightColor = (1, 1, 1, 1);
+		heightColor.r = 1.0 - 1.0 / 1 * i.worldPosition.y;
+		heightColor.g = 1.0 - 1.0 / 1 * i.worldPosition.y;
+
+		float4 finalColor = (c * diffuseColour * heightColor);
 		return finalColor;
 	}
 		ENDCG

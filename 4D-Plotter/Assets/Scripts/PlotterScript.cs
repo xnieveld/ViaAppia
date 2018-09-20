@@ -146,6 +146,7 @@ public class PlotterScript : MonoBehaviour
 
         material.SetFloat("_RowCount", edgeCount);
         material.SetFloat("_ColumnCount", edgeCount);
+        material.SetFloat("_GridStep", 1f / edgeCount); 
     }
 
 
