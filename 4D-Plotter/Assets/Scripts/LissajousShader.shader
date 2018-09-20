@@ -131,9 +131,9 @@
 		fixed4 c = (0,0,0,0);
 
 		float2 offset = (_GridOffsetX, _GridOffsetZ);
-		float2 pos = offset + i.worldPosition.xz / (_GridStep * _Scale);
+		float2 pos = offset + float2(i.uv.x, i.uv.y) / (_GridStep * _Scale);
 		float2 f = abs(frac(pos) - 0.5);
-		float3 distance = sqrt(pow(_CamPos.x - i.uv.x, 2) + pow(_CamPos.y - 0, 2) + pow(_CamPos.z - i.uv.y, 2)) / 1000;
+		float3 distance = sqrt(pow(_CamPos.x - i.worldPosition.x, 2) + pow(_CamPos.y - i.worldPosition.y, 2) + pow(_CamPos.z - i.worldPosition.z, 2)) / 1000;
 		float2 df = fwidth(pos) * _GridWidth / distance;
 		float2 g = round(smoothstep(-df, df, f) * 2) / 2;
 		float grid = 1.0 - saturate(g.x * g.y);
