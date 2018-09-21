@@ -13,6 +13,7 @@ public class PlotterScript : MonoBehaviour
 
     public enum ViewingModes { Lissajous, Model4D, Graph3d, Graph2d }
     public ViewingModes viewingMode;
+    public int lisajousNumber = 0;
 
     public enum DisplayModes { LineRenderer, Shader }
     public DisplayModes displayMode;
@@ -43,7 +44,7 @@ public class PlotterScript : MonoBehaviour
         material.SetVector("_CamPos", Camera.main.transform.position);
 
     }
-
+    /*
     public Vector3 Lissajous1(int i, int numberPoints)
     {
         float t = (float)i / numberPoints * 10;
@@ -66,7 +67,7 @@ public class PlotterScript : MonoBehaviour
         point.z = (3 * Mathf.Sin(5.2f * t) + 1.7f * Mathf.Cos(26 * t)) * Mathf.Cos(r);
         return point;
     }
-
+    
     public Vector3[] Graph2DFigure(Func<int, int, Vector3> formula, int numberPoints)
     {
         Vector3[] pointArray = new Vector3[numberPoints];
@@ -93,7 +94,7 @@ public class PlotterScript : MonoBehaviour
 
         return pointArray;
     }
-
+    */
 
     public void MakePlane(int edgeCount)
     {
@@ -153,7 +154,10 @@ public class PlotterScript : MonoBehaviour
         material.SetFloat("_ColumnCount", edgeCount);
         material.SetFloat("_GridStep", 1f / edgeCount); 
     }
-
+    public void SetViewingMode(int mode)
+    {
+        ViewingMode = (ViewingModes)mode;
+    }
 
     public ViewingModes ViewingMode
     {
@@ -168,22 +172,36 @@ public class PlotterScript : MonoBehaviour
             switch (viewingMode)
             {
                 case ViewingModes.Lissajous:
+                    material.SetFloat("_FigureNumber", lisajousNumber);
                     if (displayMode == DisplayModes.LineRenderer)
-                    {
+                    {/*
                         renderer.enabled = false;
                         lineRenderer.enabled = true;
                         Vector3[] pointArray = Graph3DFigure(Lissajous2, 100, 100);
                         lineRenderer.positionCount = 10000;
-                        lineRenderer.SetPositions(pointArray);
+                        lineRenderer.SetPositions(pointArray);*/
                     }
                     else
                     {
-                        lineRenderer.enabled = false;
+                        //lineRenderer.enabled = false;
                         renderer.enabled = true;
                     }
                     break;
 
             }
+        }
+    }
+
+    public int LisajousNumber
+    {
+        get
+        {
+            return lisajousNumber;
+        }
+        set
+        {
+            lisajousNumber = value;
+            material.SetFloat("_FigureNumber", lisajousNumber);
         }
     }
 

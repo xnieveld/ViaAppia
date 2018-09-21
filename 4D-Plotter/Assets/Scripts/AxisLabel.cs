@@ -56,6 +56,6 @@ public class AxisLabel : MonoBehaviour
     /// </summary>
     public void Update()
     {
-        transform.rotation = Quaternion.LookRotation((transform.position - Camera.main.transform.position), Vector3.up);
+        transform.rotation = Quaternion.LookRotation((transform.position - Camera.main.transform.position), Camera.main.transform.up);
     }
 }
