@@ -12,10 +12,6 @@ public class MeshGenerator : MonoBehaviour
 
     private void Start()
     {
-        float[,] input_vectors = new float[1, 2];
-        input_vectors[0, 0] = 1;
-        input_vectors[0, 1] = 0;
-        GetNormalVector(input_vectors);
         CreateSimplex();
     }
 
@@ -75,45 +71,6 @@ public class MeshGenerator : MonoBehaviour
         active = true;
     }
 
-    void VectorProject()
-    {
-        float[,] Mtransform = new float[dimensions + 1, dimensions + 1];
-        for (int i = 0; i < dimensions + 1; i++)
-        {
-            for (int j = 0; j < dimensions + 1; j++)
-            {
-                Mtransform[i, j] = (i == j) ? 1 : 0;
-
-                if (i == dimensions && j != dimensions)
-                {
-                    // Fill last column with position vector
-                }
-            }
-        }
-
-        float[,] Mlookat = new float[dimensions + 1, dimensions + 1];
-
-        // Precalculate the view angle
-        float fov_angle = (1f / Mathf.Tan(Camera.main.fieldOfView));
-
-        float[,] Mproject = new float[dimensions + 1, dimensions + 1];
-        for (int i = 0; i < dimensions + 1; i++)
-        {
-            for (int j = 0; j < dimensions + 1; j++)
-            {
-                if (i == j && i < dimensions - 1)
-                {
-                    Mtransform[i, j] = (i == j) ? fov_angle : 0;
-                } else
-                {
-                    Mtransform[i, j] = (i == j) ? 1 : 0;
-                }
-            }
-        }
-
-        
-    }
-
     void OnDrawGizmosSelected()
     {
         if (active) {
@@ -135,120 +92,58 @@ public class MeshGenerator : MonoBehaviour
         }
     }
 
-    float[] GetNormalVector(float[,] input_vectors)
-    {
-        // The matrix we apply the vectors to
-        float[,] matrix = new float[dimensions, dimensions];
-        // Base vectors are all unit vectors for the dimension over all it's axis
-        // Example 3D: 1 0 0, 0 1 0, 0 0 1 
-        float[][] base_vectors = new float[dimensions][];
-
-        for (uint i = 0; i < dimensions - 1; i++)
-        {
-            base_vectors[i] = new float[dimensions];
-        }
-
-        for (uint i = 0; i < dimensions - 1; i++)
-        {
-            for (int j = 0; j < dimensions; j++)
-            {
-                // Fill the matrix with the iput vectors
-                // in a column major style
-                matrix[i, j] = input_vectors[i, j];
-                // Fill the base vector 
-                base_vectors[i][j] = (i == j) ? 1 : 0;
-            }
-        }
-
-        for (uint j = 0; j < dimensions; j++)
-        {
-            int i = dimensions - 1;
-            base_vectors[i][j] = i == j ? 1 : 0;
-        }
-
-        float[] normal_vector = new float[dimensions];
-
-        for (uint i = 0; i < dimensions; i++)
-        {
-            float[,] s = new float[dimensions - 1, dimensions - 1];
-            for (int j = 0, r = 0; j < dimensions-1; j++, r++)
-            {
-                for (int k = 0, c = 0; k < dimensions; k++)
-                {
-                    if (k == i)
-                    {
-                        continue;
-                    }
-
-                    s[r, c] = matrix[j, k];
-
-                    c++;
-                }
-            }
-
-            if ((i % 2) == 0)
-            {
-                normal_vector = VecMatHelper.VecAdd(normal_vector, 
-                                                    VecMatHelper.VecScale(base_vectors[i], 
-                                                                          VecMatHelper.MatDetermant(s)));
-            }
-            else
-            {
-                normal_vector = VecMatHelper.VecSub(normal_vector,
-                                                    VecMatHelper.VecScale(base_vectors[i],
-                                                                          VecMatHelper.MatDetermant(s)));
-            }
-        }
-
-        return normal_vector;
-    }
-
     // Update is called once per frame
     void OnValidate () {
         CreateSimplex();
 	}
 
 
-    float[,] GetLookatMatrix(float[] from, float[] to)
+    MatrixNxN GetLookatMatrix(VectorN from, VectorN to)
     {
-        float[,] matrix = new float[dimensions, dimensions];
-        float[,] orthogonal_vectors = new float[dimensions - 2, dimensions];
+        MatrixNxN matrix = new MatrixNxN(dimensions);
+        VectorN[] orthogonal_vectors = new VectorN[dimensions - 2];
+
         for (int i = 0; i < (dimensions - 2); i++)
         {
+            orthogonal_vectors[i] = new VectorN(dimensions);
             for (int j = 0; j < dimensions; j++)
             {
-                orthogonal_vectors[i, j] = (((i + 1) == j) ? 1 : 0);
+                orthogonal_vectors[i][j] = (((i + 1) == j) ? 1 : 0);
             }
         }
-
-        float[,] columns = new float[dimensions, dimensions];
-        columns = VecMatHelper.MatSetVecAtCol(columns, VecMatHelper.VecNorm(VecMatHelper.VecSub(to, from)), dimensions - 1);
+        
+        MatrixNxN columns = new MatrixNxN(dimensions);
+        columns[dimensions-1] = VectorN.Normalize(VectorN.Subtract(to, from));
 
         for (int i = 0; i < (dimensions - 1); i++)
         {
-            float[,] cross_vectors = new float[dimensions - 1, dimensions];
+            VectorN[] cross_vectors = new VectorN[dimensions - 1];
+            for (int j = 0; j < cross_vectors.Length; j++)
+            {
+                cross_vectors[i] = new VectorN(dimensions);
+            }
 
             for (int j = i - (dimensions - 2), c = 0; c < (dimensions - 1); j++, c++)
             {
                 if (j < 0)
                 {
-                    cross_vectors = VecMatHelper.MatSetVecAtCol(cross_vectors, orthogonal_vectors[(j + (dimensions - 2))], c);
+                    cross_vectors[c] = orthogonal_vectors[(j + (dimensions - 2))];
                 }
                 else if (j == 0)
                 {
-                    VecMatHelper.MatSetVecAtCol(cross_vectors = columns[(dimensions - 1)], c);
+                    cross_vectors[c] = columns[(dimensions - 1)];
                 }
                 else
                 {
-                    VecMatHelper.MatSetVecAtCol(cross_vectors, columns[(j - 1)], c);
+                    cross_vectors[c] = columns[(j - 1)];
                 }
             }
 
-            VecMatHelper.MatSetVecAtCol(columns, GetNormalVector(cross_vectors), i);
+            columns[i] = VectorN.GetNormal(cross_vectors);
 
             if (i != (dimensions - 2))
             {
-                VecMatHelper.MatSetVecAtCol(columns, GetNormalVector(columns[i]), i);
+                columns[i] = VectorN.Normalize(columns[i]);
             }
         }
 
@@ -274,9 +169,9 @@ public class MeshGenerator : MonoBehaviour
         return matrix;
     }
 
-    float[,] GetPerspectiveMatrix()
+    MatrixNxN GetPerspectiveMatrix()
     {
-        float[,] matrix = new float[dimensions, dimensions];
+        MatrixNxN matrix = new MatrixNxN(dimensions);
         float fov = 1f / Mathf.Tan(Camera.main.fieldOfView / 2f);
 
         for (int i = 0; i <= dimensions; i++)
@@ -299,24 +194,98 @@ public class MeshGenerator : MonoBehaviour
 
     void GetProjectionMatrix()
     {
-        float[] from = { Camera.main.transform.position.x, Camera.main.transform.position.y, Camera.main.transform.position.z, 1f };
-        float[] to = { Camera.main.transform.forward.x, Camera.main.transform.forward.y, Camera.main.transform.forward.z, 0 };
+        VectorN from = new VectorN(Camera.main.transform.position.x, Camera.main.transform.position.y, Camera.main.transform.position.z, 1f);
+        VectorN to = new VectorN(Camera.main.transform.forward.x, Camera.main.transform.forward.y, Camera.main.transform.forward.z, 0);
 
-        float[,] Mview = new float[dimensions, dimensions];
-        float[,] MlookAt = GetLookatMatrix(from, to);
-        float[,] Mperspective = GetPerspectiveMatrix();
+        MatrixNxN Mview = new MatrixNxN(dimensions);
+        MatrixNxN MlookAt = GetLookatMatrix(from, to);
+        MatrixNxN Mperspective = GetPerspectiveMatrix();
 
-        Mview = VecMatHelper.MatMultiply(MlookAt, Mperspective);
+        Mview = MatrixNxN.Multiply(MlookAt, Mperspective);
     }
 }
 
-public static class VecMatHelper
+struct VectorN
 {
-    public static float[] VecAdd(float[] v1, float[] v2)
-    {
-        float[] ret_vec = new float[v1.Length];
+    private float[] data;
 
-        for (int i = 0; i < v1.Length; i++)
+    public VectorN(params float[] data)
+    {
+        this.data = data;
+    }
+
+    public VectorN(int size)
+    {
+        this.data = new float[size];
+    }
+
+    public int GetLength()
+    {
+        return data.Length;
+    }
+    
+    // Indexer declaration.
+    // If index is out of range, the temps array will throw the exception.
+    public float this[int index]
+    {
+        get
+        {
+            return data[index];
+        }
+
+        set
+        {
+            data[index] = value;
+        }
+    }
+
+    public void Add(VectorN v2)
+    {
+        for (int i = 0; i < data.Length; i++)
+        {
+            data[i] += v2[i];
+        }
+    }
+
+    public void Subtract(VectorN v2)
+    {
+        for (int i = 0; i < data.Length; i++)
+        {
+            data[i] -= v2[i];
+        }
+    }
+
+    public void Normalize()
+    {
+        float total_length = 0;
+        for (int i = 0; i < data.Length; i++)
+        {
+            total_length += Mathf.Pow(data[i], 2);
+        }
+
+        float length = Mathf.Sqrt(total_length);
+
+        for (int i = 0; i < data.Length; i++)
+        {
+            data[i] /= length;
+        }
+    }
+
+    public void Scale(float scale)
+    {
+        for (int i = 0; i < data.Length; i++)
+        {
+            data[i] *= scale;
+        }
+    }
+
+    // Static
+
+    public static VectorN Add(VectorN v1, VectorN v2)
+    {
+        VectorN ret_vec = new VectorN(v1.GetLength());
+
+        for (int i = 0; i < v1.GetLength(); i++)
         {
             ret_vec[i] = v1[i] + v2[i];
         }
@@ -324,11 +293,11 @@ public static class VecMatHelper
         return ret_vec;
     }
 
-    public static float[] VecSub(float[] v1, float[] v2)
+    public static VectorN Subtract(VectorN v1, VectorN v2)
     {
-        float[] ret_vec = new float[v1.Length];
+        VectorN ret_vec = new VectorN(v1.GetLength());
 
-        for (int i = 0; i < v1.Length; i++)
+        for (int i = 0; i < v1.GetLength(); i++)
         {
             ret_vec[i] = v1[i] - v2[i];
         }
@@ -336,18 +305,19 @@ public static class VecMatHelper
         return ret_vec;
     }
 
-    public static float[] VecNorm(float[] v1)
+    public static VectorN Normalize(VectorN v1)
     {
-        float[] ret_vec = new float[v1.Length];
+        VectorN ret_vec = new VectorN(v1.GetLength());
 
         float total_length = 0;
-        for (int i = 0; i < v1.Length; i++) {
+        for (int i = 0; i < v1.GetLength(); i++)
+        {
             total_length += Mathf.Pow(v1[i], 2);
         }
 
         float length = Mathf.Sqrt(total_length);
 
-        for (int i = 0; i < v1.Length; i++)
+        for (int i = 0; i < v1.GetLength(); i++)
         {
             ret_vec[i] = v1[i] / length;
         }
@@ -355,10 +325,10 @@ public static class VecMatHelper
         return ret_vec;
     }
 
-    public static float[] VecScale(float[] v1, float scale)
+    public static VectorN Scale(VectorN v1, float scale)
     {
-        float[] ret_vec = new float[v1.Length];
-        for (int i = 0; i < v1.Length; i++)
+        VectorN ret_vec = new VectorN(v1.GetLength());
+        for (int i = 0; i < v1.GetLength(); i++)
         {
             ret_vec[i] = v1[i] * scale;
         }
@@ -366,14 +336,204 @@ public static class VecMatHelper
         return ret_vec;
     }
 
-    public static float MatDetermant(float[,] input_matrix)
+    public static VectorN GetNormal(VectorN[] input_vectors)
     {
-        float rv = 0;
-        int dimensions = input_matrix.GetLength(0);
+        int dimensions = input_vectors[0].GetLength();
+
+        // The matrix we apply the vectors to
+        MatrixNxN matrix = new MatrixNxN(dimensions);
+        // Base vectors are all unit vectors for the dimension over all it's axis
+        // Example 3D: 1 0 0, 0 1 0, 0 0 1 
+        VectorN[] base_vectors = new VectorN[dimensions];
+
+        for (uint i = 0; i < dimensions - 1; i++)
+        {
+            base_vectors[i] = new VectorN(dimensions);
+        }
+
+        for (int i = 0; i < dimensions - 1; i++)
+        {
+            for (int j = 0; j < dimensions; j++)
+            {
+                // Fill the matrix with the iput vectors
+                // in a column major style
+                matrix[i, j] = input_vectors[i][j];
+                // Fill the base vector 
+                base_vectors[i][j] = (i == j) ? 1 : 0;
+            }
+        }
+
+        for (int j = 0; j < dimensions; j++)
+        {
+            int i = dimensions - 1;
+            base_vectors[i][j] = i == j ? 1 : 0;
+        }
+
+        VectorN normal_vector = new VectorN(dimensions);
 
         for (int i = 0; i < dimensions; i++)
         {
-            float[,] s = new float[dimensions - 1, dimensions - 1];
+            MatrixNxN s = new MatrixNxN(dimensions - 1);
+            for (int j = 0, r = 0; j < dimensions - 1; j++, r++)
+            {
+                for (int k = 0, c = 0; k < dimensions; k++)
+                {
+                    if (k == i)
+                    {
+                        continue;
+                    }
+
+                    s[r, c] = matrix[j, k];
+
+                    c++;
+                }
+            }
+
+            if ((i % 2) == 0)
+            {
+                normal_vector.Add(Scale(base_vectors[i], MatrixNxN.Determant(s)));
+            }
+            else
+            {
+                normal_vector.Subtract(Scale(base_vectors[i], MatrixNxN.Determant(s)));
+            }
+        }
+
+        return normal_vector;
+    }
+}
+ 
+
+struct MatrixNxN
+{
+    VectorN[] data;
+
+    public MatrixNxN(params float[] data)
+    {
+        int size = (int)Mathf.Sqrt(data.Length);
+        this.data = new VectorN[size];
+
+        for (int i = 0; i < size; i++)
+        {
+            this.data[i] = new VectorN(size);
+            this.data[i][i%size] = data[i];
+        }
+    }
+
+    public MatrixNxN(int size)
+    {
+        this.data = new VectorN[size];
+
+        for (int i = 0; i < size; i++)
+        {
+            this.data[i] = new VectorN(size);
+        }
+    }
+
+    // Indexer declaration.
+    // If index is out of range, the temps array will throw the exception.
+    public float this[int column, int row]
+    {
+        get
+        {
+            return data[column][row];
+        }
+
+        set
+        {
+            data[column][row] = value;
+        }
+    }
+
+    public VectorN this[int column]
+    {
+        get
+        {
+            return data[column];
+        }
+
+        set
+        {
+            data[column] = value;
+        }
+    }
+
+    public float Determant()
+    {
+        float determant = 0;
+        int dimensions = data.Length;
+
+        for (int i = 0; i < dimensions; i++)
+        {
+            MatrixNxN s = new MatrixNxN(dimensions - 1);
+
+            for (int j = 1, r = 0; j < dimensions; j++, r++)
+            {
+                for (int k = 0, c = 0; k < dimensions; k++)
+                {
+                    if (k == i)
+                    {
+                        continue;
+                    }
+
+                    s[r, c] = this[j, k];
+
+                    c++;
+                }
+            }
+
+            if (i == 0)
+            {
+                determant = this[0, i] * Determant(s);
+            }
+            else if ((i % 2) == 0)
+            {
+                determant += this[0, i] * Determant(s);
+            }
+            else
+            {
+                determant -= this[0, i] * Determant(s);
+            }
+        }
+
+        return determant;
+    }
+
+    public void SetVecAtCol(VectorN v1, int col)
+    {
+        this[col] = v1;
+    }
+
+    public void Multiply(MatrixNxN m2)
+    {
+        for (int i = 0; i < data.Length; i++)
+        {
+            for (int j = 0; j < data.Length; j++)
+            {
+                this[i, j] = this[i, 0] * m2[0, j];
+
+                for (int k = 0; k < data.Length; k++)
+                {
+                    this[i, j] += this[i, j] * m2[i, j];
+                }
+            }
+        }
+    }
+
+    public int GetDimension()
+    {
+        return data.Length;
+    }
+
+    // Static
+    public static float Determant(MatrixNxN input_matrix)
+    {
+        float rv = 0;
+        int dimensions = input_matrix.GetDimension();
+
+        for (int i = 0; i < dimensions; i++)
+        {
+            MatrixNxN s = new MatrixNxN(dimensions - 1);
 
             for (int j = 1, r = 0; j < dimensions; j++, r++)
             {
@@ -392,44 +552,41 @@ public static class VecMatHelper
 
             if (i == 0)
             {
-                rv = input_matrix[0, i] * MatDetermant(s);
+                rv = input_matrix[0, i] * MatrixNxN.Determant(s);
             }
             else if ((i % 2) == 0)
             {
-                rv += input_matrix[0, i] * MatDetermant(s);
+                rv += input_matrix[0, i] * MatrixNxN.Determant(s);
             }
             else
             {
-                rv -= input_matrix[0, i] * MatDetermant(s);
+                rv -= input_matrix[0, i] * MatrixNxN.Determant(s);
             }
         }
 
         return rv;
     }
 
-    public static float[,] MatSetVecAtCol(float[,] m1, float[] v1, int col)
+    public static MatrixNxN SetVecAtCol(MatrixNxN m1, VectorN v1, int col)
     {
-        float[,] matrix = m1;
+        MatrixNxN matrix = new MatrixNxN(m1.GetDimension());
 
-        for (int i = 0; i < m1.GetLength(1); i++)
-        {
-            matrix[col, i] = v1[i];
-        }
+        matrix[col] = v1;
 
         return matrix;
     }
 
-    public static float[,] MatMultiply(float[,] m1, float[,] m2)
+    public static MatrixNxN Multiply(MatrixNxN m1, MatrixNxN m2)
     {
-        float[,] matrix = new float[m1.GetLength(0), m1.GetLength(1)];
+        MatrixNxN matrix = new MatrixNxN(m1.GetDimension());
 
-        for (int i = 0; i < m1.GetLength(0); i++)
+        for (int i = 0; i < m1.GetDimension(); i++)
         {
-            for (int j = 0; j < m1.GetLength(1); j++)
+            for (int j = 0; j < m1.GetDimension(); j++)
             {
                 matrix[i, j] = m1[i, 0] * m2[0, j];
 
-                for (int k = 0; k < m1.GetLength(1); k++)
+                for (int k = 0; k < m1.GetDimension(); k++)
                 {
                     matrix[i, j] += m1[i, j] * m2[i, j];
                 }
