@@ -170,7 +170,7 @@
 		heightColor.r = 1.0 - 1.0 / 2 * i.worldPosition.y;
 		heightColor.g = 1.0 - 1.0 / 2 * i.worldPosition.y;
 
-		float4 finalColor = (c * diffuseColour * heightColor);
+		float4 finalColor = (c * diffuseColour);// *heightColor);
 		return finalColor;
 	}
 		ENDCG
