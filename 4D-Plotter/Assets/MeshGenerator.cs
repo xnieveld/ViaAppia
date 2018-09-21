@@ -2,7 +2,7 @@
 
 public class MeshGenerator : MonoBehaviour
 {
-    Color[] PointColors = {Color.red, Color.green, Color.blue, Color.yellow};
+    Color[] PointColors = {Color.red, Color.green, Color.blue, Color.yellow, Color.cyan};
 
     [SerializeField, Range(0,4)]
     int dimensions;
@@ -123,7 +123,7 @@ public class MeshGenerator : MonoBehaviour
 
     MatrixNxN GetLookatMatrix(VectorN from, VectorN to)
     {
-        MatrixNxN matrix = new MatrixNxN(dimensions);
+        MatrixNxN matrix = new MatrixNxN(dimensions + 1);
         VectorN[] orthogonal_vectors = new VectorN[dimensions - 2];
 
         for (int i = 0; i < (dimensions - 2); i++)
@@ -194,7 +194,7 @@ public class MeshGenerator : MonoBehaviour
 
     MatrixNxN GetPerspectiveMatrix()
     {
-        MatrixNxN matrix = new MatrixNxN(dimensions);
+        MatrixNxN matrix = new MatrixNxN(dimensions + 1);
         float fov = 1f / Mathf.Tan(Camera.main.fieldOfView / 2f);
 
         for (int i = 0; i <= dimensions; i++)
@@ -407,7 +407,7 @@ struct VectorN
         // Example 3D: 1 0 0, 0 1 0, 0 0 1 
         VectorN[] base_vectors = new VectorN[dimensions];
 
-        for (uint i = 0; i < dimensions - 1; i++)
+        for (uint i = 0; i < dimensions; i++)
         {
             base_vectors[i] = new VectorN(dimensions);
         }
