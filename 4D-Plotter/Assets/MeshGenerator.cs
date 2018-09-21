@@ -10,6 +10,8 @@ public class MeshGenerator : MonoBehaviour
     VectorN[] vertices;
     bool active = false;
 
+    MatrixNxN Mview;
+
     private void Start()
     {
         CreateSimplex();
@@ -45,6 +47,9 @@ public class MeshGenerator : MonoBehaviour
             if (i == dimensions)
             {
                 vertices[i][i - 1] = -vertices[i - 1][i - 1];
+                if (dimensions > 3) {
+                    Project3D();
+                }
                 return;
             }
 
@@ -74,6 +79,19 @@ public class MeshGenerator : MonoBehaviour
         }
 
         active = true;
+    }
+
+    void Project3D() 
+    {
+        GetProjectionMatrix();
+        Debug.Log(Mview);
+        for (int i = 0; i < vertices.Length; i++) {
+            vertices[i].MakeHomogenous();
+            Debug.Log(vertices[i][4]);
+            VectorN.MultiplyMatrix(vertices[i], Mview);
+            Debug.Log(vertices[i][4]);
+            vertices[i].NormalizeReduce();
+        } 
     }
 
     void OnDrawGizmosSelected()
@@ -202,10 +220,9 @@ public class MeshGenerator : MonoBehaviour
         VectorN from = new VectorN(Camera.main.transform.position.x, Camera.main.transform.position.y, Camera.main.transform.position.z, 1f);
         VectorN to = new VectorN(Camera.main.transform.forward.x, Camera.main.transform.forward.y, Camera.main.transform.forward.z, 0);
 
-        MatrixNxN Mview = new MatrixNxN(dimensions);
+        Mview = new MatrixNxN(dimensions);
         MatrixNxN MlookAt = GetLookatMatrix(from, to);
         MatrixNxN Mperspective = GetPerspectiveMatrix();
-
         Mview = MatrixNxN.Multiply(MlookAt, Mperspective);
     }
 }
@@ -260,6 +277,21 @@ struct VectorN
         }
     }
 
+    public static VectorN MultiplyMatrix(VectorN v1, MatrixNxN m1) 
+    {
+        VectorN return_vector = new VectorN(v1.GetLength());
+        Debug.Log(m1.GetDimension());
+        for (int i = 0; i < v1.GetLength(); i++)
+        {
+            for (int j = 0; j < v1.GetLength(); j++)
+            {
+                return_vector[i] += v1[i] * m1[i, j];
+            }
+        }
+
+        return return_vector;
+    }
+
     public void Normalize()
     {
         float total_length = 0;
@@ -276,12 +308,36 @@ struct VectorN
         }
     }
 
+    public void NormalizeReduce() 
+    {
+        for (int i = 0; i < data.Length-1; i++) {
+            data[i] /= data[data.Length-1];
+        }
+
+        float[] temp = data;
+        data = new float[data.Length-1];
+        for (int i = 0; i < data.Length; i++) {
+            data[i] = temp[i];
+        }
+    }
+
     public void Scale(float scale)
     {
         for (int i = 0; i < data.Length; i++)
         {
             data[i] *= scale;
         }
+    }
+
+    public void MakeHomogenous() 
+    {
+        float[] temp = data;
+        data = new float[data.Length+1];
+        for (int i = 0; i < data.Length-1; i++) {
+            data[i] = temp[i];
+        }
+
+        data[data.Length-1] = 1;
     }
 
     // Static
@@ -367,15 +423,14 @@ struct VectorN
                 base_vectors[i][j] = (i == j) ? 1 : 0;
             }
         }
-
+        
         for (int j = 0; j < dimensions; j++)
         {
             int i = dimensions - 1;
-            base_vectors[i][j] = i == j ? 1 : 0;
+            base_vectors[i][j] = (i == j) ? 1f : 0;
         }
 
         VectorN normal_vector = new VectorN(dimensions);
-
         for (int i = 0; i < dimensions; i++)
         {
             MatrixNxN s = new MatrixNxN(dimensions - 1);
