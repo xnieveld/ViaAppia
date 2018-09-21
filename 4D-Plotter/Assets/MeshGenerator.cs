@@ -5,7 +5,7 @@ public class MeshGenerator : MonoBehaviour
     Color[] PointColors = {Color.red, Color.green, Color.blue, Color.yellow, Color.cyan};
 
     [SerializeField, Range(0,4)]
-    int dimensions;
+    public int dimensions;
 
     VectorN[] vertices;
     bool active = false;
@@ -17,13 +17,13 @@ public class MeshGenerator : MonoBehaviour
         CreateSimplex();
     }
 
-    void CreateSimplex()
+    public Vector3[] CreateSimplex()
     {
         // 5 vertices for 4D
         vertices = new VectorN[dimensions+1];
         if (dimensions == 0) {
             active = true;
-            return;
+            return null;
         }
 
         for (int i = 0; i < vertices.Length; i++)
@@ -50,7 +50,14 @@ public class MeshGenerator : MonoBehaviour
                 if (dimensions > 3) {
                     Project3D();
                 }
-                return;
+                Vector3[] resultList = new Vector3[vertices.Length];
+                int index = 0;
+                foreach (VectorN vn in vertices)
+                {
+                    resultList[index] = new Vector3(vn[0], vn[1], vn[2]);
+                    index++;
+                }
+                return resultList;
             }
 
             // Calculate the dot product, this gives the value for i-1
@@ -79,6 +86,7 @@ public class MeshGenerator : MonoBehaviour
         }
 
         active = true;
+        return null;
     }
 
     void Project3D() 

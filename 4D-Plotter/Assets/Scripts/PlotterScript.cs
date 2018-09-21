@@ -23,7 +23,7 @@ public class PlotterScript : MonoBehaviour
     private Material material;
     private LineRenderer lineRenderer;
     
-    //private MeshGenerator meshGen;
+    private MeshGenerator meshGen;
 
     [SerializeField]
     private Material gridMaterial;
@@ -38,6 +38,7 @@ public class PlotterScript : MonoBehaviour
         mesh = GetComponent<MeshFilter>().mesh;
         renderer = GetComponent<MeshRenderer>();
         material = GetComponent<Renderer>().material;
+        meshGen = GetComponent<MeshGenerator>();
 
         
         MakePlane(200);
@@ -282,8 +283,8 @@ public class PlotterScript : MonoBehaviour
                             points[2] = new Vector3(1, -1, -1);
                             points[3] = new Vector3(1, 1, 1);
 
-                        //meshGen.dimensions = number;
-                        //points = meshGen.CreateSimplex();
+                        meshGen.dimensions = number;
+                        points = meshGen.CreateSimplex();
                         PointsToMesh(points);
                         break;
 
