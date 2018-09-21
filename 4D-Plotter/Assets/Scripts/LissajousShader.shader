@@ -20,6 +20,11 @@
 	uniform float _FigureNumber;
 	// PI = 3.14159265359;
 
+	float4 gridPlane(int x, int y, int rows, int columns) {
+
+		return float4(((float)x - columns / 2) * 10 / columns, 0, ((float)y - rows / 2) * 10 / rows, 0);
+	}
+
 	float4 lissajous0(int x, int y, int rows, int columns) {
 		float t = (float)x / columns * 2 * 3.14159265359;
 		float r = (float)y / rows * 2 * 3.14159265359;
@@ -52,6 +57,19 @@
 		return newPoint;
 	}
 
+
+	float4 parabola(int x, int y, int rows, int columns) {
+		float4 newPoint = gridPlane(x, y, rows, columns);
+		newPoint.y = 3 * pow(newPoint.x / 3, 2) + 2 * pow(newPoint.z / 3, 2);
+		return newPoint;
+	}
+
+	float4 sadle(int x, int y, int rows, int columns) {
+		float4 newPoint = gridPlane(x, y, rows, columns);
+		newPoint.y = 3 * pow(newPoint.x / 3, 2) - 3 * pow(newPoint.z / 3, 2);
+		return newPoint;
+	}
+
 	float4 calculatePoint(int x, int y, int rows, int columns) {
 		float4 newPoint = float4(0, 0, 0, 0);
 		switch (_FigureNumber) {
@@ -64,8 +82,14 @@
 		case 2:
 			newPoint = lissajous2(x, y, rows, columns);
 			break;
+		case 3:
+			newPoint = parabola(x, y, rows, columns);
+			break;
+		case 4:
+			newPoint = sadle(x, y, rows, columns);
+			break;
 		default:
-			newPoint = float4(((float)x - columns / 2) * 10 / columns, 0, ((float)y - rows / 2) * 10 / rows, 0);
+			newPoint = gridPlane(x, y, rows, columns);
 			break;
 		}
 
