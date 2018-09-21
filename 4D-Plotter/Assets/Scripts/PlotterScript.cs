@@ -11,9 +11,9 @@ public class PlotterScript : MonoBehaviour
     [SerializeField]
     AxisManager manager;
 
-    public enum ViewingModes { Lissajous, Model4D, Graph3d, Graph2d }
+    public enum ViewingModes { Lissajous, Simplex}
     public ViewingModes viewingMode;
-    public int lisajousNumber = 0;
+    public int number = 0;
 
     public enum DisplayModes { LineRenderer, Shader }
     public DisplayModes displayMode;
@@ -22,6 +22,16 @@ public class PlotterScript : MonoBehaviour
     private MeshRenderer renderer;
     private Material material;
     private LineRenderer lineRenderer;
+
+    Vector3[] megapoit = new Vector3[1];
+
+    //private MeshGenerator meshGen;
+
+    [SerializeField]
+    private Material gridMaterial;
+
+    [SerializeField]
+    private Material multiDimensionalMaterial;
 
     // Use this for initialization
     void Start()
@@ -41,22 +51,25 @@ public class PlotterScript : MonoBehaviour
     void Update()
     {
         transform.localScale = new Vector3(manager.XScale, manager.YScale, manager.ZScale);
-        material.SetVector("_CamPos", Camera.main.transform.position);
 
-        // boundsTarget is the center of the camera's frustum, in world coordinates:
-        Vector3 camPosition = Camera.main.transform.position;
-        Vector3 normCamForward = Vector3.Normalize(Camera.main.transform.forward);
-        float boundsDistance = (Camera.main.farClipPlane - Camera.main.nearClipPlane) / 2 + Camera.main.nearClipPlane;
-        Vector3 boundsTarget = camPosition + (normCamForward * boundsDistance);
+        if (viewingMode == ViewingModes.Lissajous)
+        {
+            material.SetVector("_CamPos", Camera.main.transform.position);
 
-        // The game object's transform will be applied to the mesh's bounds for frustum culling checking.
-        // We need to "undo" this transform by making the boundsTarget relative to the game object's transform:
-        Vector3 realtiveBoundsTarget = this.transform.InverseTransformPoint(boundsTarget);
+            // boundsTarget is the center of the camera's frustum, in world coordinates:
+            Vector3 camPosition = Camera.main.transform.position;
+            Vector3 normCamForward = Vector3.Normalize(Camera.main.transform.forward);
+            float boundsDistance = (Camera.main.farClipPlane - Camera.main.nearClipPlane) / 2 + Camera.main.nearClipPlane;
+            Vector3 boundsTarget = camPosition + (normCamForward * boundsDistance);
 
-        // Set the bounds of the mesh to be a 1x1x1 cube (actually doesn't matter what the size is)
-        Mesh mesh = GetComponent<MeshFilter>().mesh;
-        mesh.bounds = new Bounds(realtiveBoundsTarget, Vector3.one);
+            // The game object's transform will be applied to the mesh's bounds for frustum culling checking.
+            // We need to "undo" this transform by making the boundsTarget relative to the game object's transform:
+            Vector3 realtiveBoundsTarget = this.transform.InverseTransformPoint(boundsTarget);
 
+            // Set the bounds of the mesh to be a 1x1x1 cube (actually doesn't matter what the size is)
+            Mesh mesh = GetComponent<MeshFilter>().mesh;
+            mesh.bounds = new Bounds(realtiveBoundsTarget, Vector3.one);
+        }
     }
     /*
     public Vector3 Lissajous1(int i, int numberPoints)
@@ -168,6 +181,67 @@ public class PlotterScript : MonoBehaviour
         material.SetFloat("_ColumnCount", edgeCount);
         material.SetFloat("_GridStep", 1f / edgeCount); 
     }
+
+    private int OverFlow(int value, int min, int max)
+    {
+        if (value > max)
+        {
+            value -= (max - min + 1);
+        }
+        if (value < min)
+        {
+            value += (max - min + 1);
+        }
+        return value;
+    }
+
+    public void PointsToMesh(Vector3[] pointList)
+    {
+        mesh.Clear();
+        mesh.vertices = pointList;
+        megapoit = pointList;
+
+        int[] tris;
+        
+        List<int> triList = new List<int>();
+
+        for (int i = 0; i < pointList.Length; i++)
+        {
+            triList.Add(i);
+            triList.Add(OverFlow(i + 1, 0, pointList.Length - 1));
+            triList.Add(OverFlow(i - 1, 0, pointList.Length - 1));
+
+            triList.Add(i);
+            triList.Add(OverFlow(i - 1, 0, pointList.Length - 1));
+            triList.Add(OverFlow(i + 1, 0, pointList.Length - 1));
+
+
+            triList.Add(OverFlow(i + 1, 0, pointList.Length - 1));
+            triList.Add(i);
+            triList.Add(OverFlow(i - 1, 0, pointList.Length - 1));
+
+            triList.Add(OverFlow(i + 1, 0, pointList.Length - 1));
+            triList.Add(OverFlow(i - 1, 0, pointList.Length - 1));
+            triList.Add(i);
+
+            triList.Add(OverFlow(i - 1, 0, pointList.Length - 1));
+            triList.Add(i);
+            triList.Add(OverFlow(i + 1, 0, pointList.Length - 1));
+
+            triList.Add(OverFlow(i - 1, 0, pointList.Length - 1));
+            triList.Add(OverFlow(i + 1, 0, pointList.Length - 1));
+            triList.Add(i);
+        }
+        tris = triList.ToArray();
+        foreach (int a in tris)
+        {
+            print(a);
+        }
+        
+        mesh.triangles = tris;
+        mesh.RecalculateNormals();
+    }
+
     public void SetViewingMode(int mode)
     {
         ViewingMode = (ViewingModes)mode;
@@ -181,41 +255,63 @@ public class PlotterScript : MonoBehaviour
         }
         set
         {
-            viewingMode = value;
-
-            switch (viewingMode)
+            if (viewingMode != value)
             {
-                case ViewingModes.Lissajous:
-                    material.SetFloat("_FigureNumber", lisajousNumber);
-                    if (displayMode == DisplayModes.LineRenderer)
-                    {/*
+                viewingMode = value;
+                switch (viewingMode)
+                {
+                    case ViewingModes.Lissajous:
+                        renderer.material = gridMaterial;
+                        material = GetComponent<Renderer>().material;
+                        MakePlane(200);
+                        material.SetFloat("_FigureNumber", number);
+
+                        if (displayMode == DisplayModes.LineRenderer)
+                        {/*
                         renderer.enabled = false;
                         lineRenderer.enabled = true;
                         Vector3[] pointArray = Graph3DFigure(Lissajous2, 100, 100);
                         lineRenderer.positionCount = 10000;
                         lineRenderer.SetPositions(pointArray);*/
-                    }
-                    else
-                    {
-                        //lineRenderer.enabled = false;
-                        renderer.enabled = true;
-                    }
-                    break;
+                        }
+                        else
+                        {
+                            //lineRenderer.enabled = false;
+                            renderer.enabled = true;
+                        }
+                        break;
+                    case ViewingModes.Simplex:
+                        renderer.material = multiDimensionalMaterial;
+                        material = GetComponent<Renderer>().material;
+                        Vector3[] points = new Vector3[4];
+                        points[0] = new Vector3(-1, -1, 1);
+                        points[1] = new Vector3(-1, 1, -1);
+                            points[2] = new Vector3(1, -1, -1);
+                            points[3] = new Vector3(1, 1, 1);
 
+                        //meshGen.dimensions = number;
+                        //points = meshGen.CreateSimplex();
+                        PointsToMesh(points);
+                        break;
+
+                }
             }
         }
     }
 
-    public int LisajousNumber
+    public int Number
     {
         get
         {
-            return lisajousNumber;
+            return number;
         }
         set
         {
-            lisajousNumber = value;
-            material.SetFloat("_FigureNumber", lisajousNumber);
+            number = value;
+            if (viewingMode == ViewingModes.Lissajous)
+            {
+                material.SetFloat("_FigureNumber", number);
+            }
         }
     }
 
@@ -229,6 +325,14 @@ public class PlotterScript : MonoBehaviour
         {
             displayMode = value;
             ViewingMode = viewingMode;
+        }
+    }
+
+    private void OnDrawGizmos()
+    {
+        for (int i = 0; i < megapoit.Length; i++)
+        {
+            Gizmos.DrawSphere(megapoit[i],0.1f);
         }
     }
 
