@@ -19,53 +19,90 @@ public class CameraController: MonoBehaviour {
 
     private void Update()
     {
-        if (Input.touchCount == 2)
+        if (Application.isMobilePlatform)
         {
-            // Store both touches.
-            Touch touchZero = Input.GetTouch(0);
-            Touch touchOne = Input.GetTouch(1);
 
-            // Find the position in the previous frame of each touch.
-            Vector2 touchZeroPrevPos = touchZero.position - touchZero.deltaPosition;
-            Vector2 touchOnePrevPos = touchOne.position - touchOne.deltaPosition;
+            if (Input.touchCount == 2)
+            {
+                // Store both touches.
+                Touch touchZero = Input.GetTouch(0);
+                Touch touchOne = Input.GetTouch(1);
 
-            // Find the magnitude of the vector (the distance) between the touches in each frame.
-            float prevTouchDeltaMag = (touchZeroPrevPos - touchOnePrevPos).magnitude;
-            float touchDeltaMag = (touchZero.position - touchOne.position).magnitude;
+                // Find the position in the previous frame of each touch.
+                Vector2 touchZeroPrevPos = touchZero.position - touchZero.deltaPosition;
+                Vector2 touchOnePrevPos = touchOne.position - touchOne.deltaPosition;
 
-            // Find the difference in the distances between each frame.
-            float deltaMagnitudeDiff = prevTouchDeltaMag - touchDeltaMag;
-            
-            distance += 0.01f * deltaMagnitudeDiff;
+                // Find the magnitude of the vector (the distance) between the touches in each frame.
+                float prevTouchDeltaMag = (touchZeroPrevPos - touchOnePrevPos).magnitude;
+                float touchDeltaMag = (touchZero.position - touchOne.position).magnitude;
 
-            transform.localPosition = new Vector3(0, 0, -distance);
+                // Find the difference in the distances between each frame.
+                float deltaMagnitudeDiff = prevTouchDeltaMag - touchDeltaMag;
 
+                distance += 0.01f * deltaMagnitudeDiff;
+
+                transform.localPosition = new Vector3(0, 0, -distance);
+
+            }
+            else
+            {
+                if (Input.touches.Any(x => x.phase == TouchPhase.Began))
+                {
+                    Touch touch = Input.GetTouch(0);
+                    startMouseLocation = touch.position;
+                    cameraHolderStartQuaternion = cameraHolder.rotation;
+                    dragging = true;
+                }
+                if (Input.touches.Any(x => x.phase == TouchPhase.Ended))
+                {
+                    dragging = false;
+                }
+                if (dragging)
+                {
+                    Touch touch = Input.GetTouch(0);
+                    Vector2 deltaMouse = touch.position - startMouseLocation;
+                    cameraHolder.transform.rotation = cameraHolderStartQuaternion * Quaternion.Euler(new Vector3(-deltaMouse.y, deltaMouse.x, 0) * 0.2f);
+                }
+
+
+
+                if (Input.GetMouseButton(0) && VR)
+                {
+                    VR = false;
+                }
+            }
         }
         else
         {
-            if (Input.touches.Any(x => x.phase == TouchPhase.Began))
+
+            if (Input.GetKey(KeyCode.KeypadPlus))
             {
-                Touch touch = Input.GetTouch(0);
-                startMouseLocation = touch.position;
+
+                distance -= 0.1f;
+                transform.localPosition = new Vector3(0, 0, -distance);
+
+            }
+            if (Input.GetKey(KeyCode.KeypadMinus))
+            {
+
+                distance += 0.1f;
+                transform.localPosition = new Vector3(0, 0, -distance);
+
+            }
+            if (Input.GetMouseButtonDown(0))
+            {
+                startMouseLocation = Input.mousePosition;
                 cameraHolderStartQuaternion = cameraHolder.rotation;
                 dragging = true;
             }
-            if (Input.touches.Any(x => x.phase == TouchPhase.Ended))
+            if (Input.GetMouseButtonUp(0))
             {
                 dragging = false;
             }
             if (dragging)
             {
-                Touch touch = Input.GetTouch(0);
-                Vector2 deltaMouse = touch.position - startMouseLocation;
+                Vector2 deltaMouse = new Vector2(Input.mousePosition.x, Input.mousePosition.y) - startMouseLocation;
                 cameraHolder.transform.rotation = cameraHolderStartQuaternion * Quaternion.Euler(new Vector3(-deltaMouse.y, deltaMouse.x, 0) * 0.2f);
-            }
-
-
-
-            if (Input.GetMouseButton(0) && VR)
-            {
-                VR = false;
             }
         }
     }
