@@ -22,9 +22,7 @@ public class PlotterScript : MonoBehaviour
     private MeshRenderer renderer;
     private Material material;
     private LineRenderer lineRenderer;
-
-    Vector3[] megapoit = new Vector3[1];
-
+    
     //private MeshGenerator meshGen;
 
     [SerializeField]
@@ -199,8 +197,7 @@ public class PlotterScript : MonoBehaviour
     {
         mesh.Clear();
         mesh.vertices = pointList;
-        megapoit = pointList;
-
+    
         int[] tris;
         
         List<int> triList = new List<int>();
@@ -327,13 +324,4 @@ public class PlotterScript : MonoBehaviour
             ViewingMode = viewingMode;
         }
     }
-
-    private void OnDrawGizmos()
-    {
-        for (int i = 0; i < megapoit.Length; i++)
-        {
-            Gizmos.DrawSphere(megapoit[i],0.1f);
-        }
-    }
-
 }
