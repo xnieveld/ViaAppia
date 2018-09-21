@@ -7,7 +7,7 @@ public class MeshGenerator : MonoBehaviour
     [SerializeField, Range(0,16)]
     int dimensions;
 
-    float[,] vertices;
+    VectorN[] vertices;
     bool active = false;
 
     private void Start()
@@ -18,14 +18,19 @@ public class MeshGenerator : MonoBehaviour
     void CreateSimplex()
     {
         // 5 vertices for 4D
-        vertices = new float[dimensions+1, dimensions];
+        vertices = new VectorN[dimensions+1];
         if (dimensions == 0) {
             active = true;
             return;
         }
 
+        for (int i = 0; i < vertices.Length; i++)
+        {
+            vertices[i] = new VectorN(dimensions);
+        }
+
         // First must be a unit vector
-        vertices[0, 0] = 1f;
+        vertices[0][0] = 1f;
 
         // Dot-product must be -1/n. First property of simplices. Because of the unit vector x = -1/n
         for (int i = 1; i < dimensions + 1; i++)
@@ -34,12 +39,12 @@ public class MeshGenerator : MonoBehaviour
             // This means the variables can be copied from the prvious vector
             for (int j = 0; j < i - 1; j++)
             {
-                vertices[i, j] = vertices[i - 1, j];
+                vertices[i][j] = vertices[i - 1][j];
             }
 
             if (i == dimensions)
             {
-                vertices[i, i - 1] = -vertices[i - 1, i - 1];
+                vertices[i][i - 1] = -vertices[i - 1][i - 1];
                 return;
             }
 
@@ -47,12 +52,12 @@ public class MeshGenerator : MonoBehaviour
             float total_dot = 0;
             for (int j = 0; j < i - 1; j++)
             {
-                total_dot += Mathf.Pow(vertices[i - 1, j], 2);
+                total_dot += Mathf.Pow(vertices[i - 1][j], 2);
             }
 
             // Simplified dot product where I calculate the missing element
-            total_dot = (-1f / dimensions - total_dot) / vertices[i - 1, i - 1];
-            vertices[i, i - 1] = total_dot;
+            total_dot = (-1f / dimensions - total_dot) / vertices[i - 1][i - 1];
+            vertices[i][i - 1] = total_dot;
 
             // Second must be unit vector. We leave the last one at 0. So a²+b²=c²
             // length(c) is 1, a = -1/3. b = sqrt(1^2 - (-1/3)^2)
@@ -62,10 +67,10 @@ public class MeshGenerator : MonoBehaviour
             float y_squared = 0;
             for (int j = 0; j < i; j++)
             {
-                y_squared += Mathf.Pow(vertices[i, j], 2);
+                y_squared += Mathf.Pow(vertices[i][j], 2);
             }
 
-            vertices[i, i] = Mathf.Sqrt(1f - y_squared);
+            vertices[i][i] = Mathf.Sqrt(1f - y_squared);
         }
 
         active = true;
@@ -78,9 +83,9 @@ public class MeshGenerator : MonoBehaviour
 
             for (int i = 0; i < dimensions + 1; i++)
             {
-                vectors[i] = new Vector3(dimensions > 0 ? vertices[i, 0] : 0, 
-                                         dimensions > 1 ? vertices[i, 1] : 0, 
-                                         dimensions > 2 ? vertices[i, 2] : 0);
+                vectors[i] = new Vector3(dimensions > 0 ? vertices[i][0] : 0, 
+                                         dimensions > 1 ? vertices[i][1] : 0, 
+                                         dimensions > 2 ? vertices[i][2] : 0);
             }
 
             // Draw a yellow sphere at the transform's position
