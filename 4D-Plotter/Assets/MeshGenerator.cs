@@ -4,7 +4,7 @@ public class MeshGenerator : MonoBehaviour
 {
     Color[] PointColors = {Color.red, Color.green, Color.blue, Color.yellow};
 
-    [SerializeField, Range(0,16)]
+    [SerializeField, Range(0,4)]
     int dimensions;
 
     VectorN[] vertices;
