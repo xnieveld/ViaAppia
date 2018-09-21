@@ -230,10 +230,6 @@ public class PlotterScript : MonoBehaviour
             triList.Add(i);
         }
         tris = triList.ToArray();
-        foreach (int a in tris)
-        {
-            print(a);
-        }
         
         mesh.triangles = tris;
         mesh.RecalculateNormals();
